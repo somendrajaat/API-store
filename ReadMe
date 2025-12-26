@@ -1,0 +1,12 @@
+# API Store
+
+Backend system to publish, subscribe, and consume APIs with API keys and rate limiting.
+
+## Tech Stack
+- Java 17
+- Spring Boot
+- PostgreSQL
+- Redis
+
+## Status
+🚧 Initial setup
