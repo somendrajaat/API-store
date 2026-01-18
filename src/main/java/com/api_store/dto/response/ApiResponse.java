@@ -9,6 +9,13 @@ public class ApiResponse {
     private String description;
     private String baseUrl;
     private Date createdAt;
+    public ApiResponse(){}
+    public ApiResponse(String name, String description, String baseUrl, Date createdAt) {
+        this.name = name;
+        this.description = description;
+        this.baseUrl = baseUrl;
+        this.createdAt = createdAt;
+    }
 
     public Long getId() {
         return id;

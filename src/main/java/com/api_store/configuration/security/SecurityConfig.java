@@ -29,6 +29,7 @@ public class SecurityConfig {
                                 SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/apis/**").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(

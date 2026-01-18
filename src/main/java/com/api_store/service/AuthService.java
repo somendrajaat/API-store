@@ -5,12 +5,14 @@ import com.api_store.domain.user.UserEntity;
 import com.api_store.dto.request.LoginRequest;
 import com.api_store.dto.request.RegisterRequest;
 import com.api_store.dto.response.AuthResponse;
+import com.api_store.exception.UnauthorizedException;
 import com.api_store.repository.UserRepository;
 import com.api_store.util.JwtUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -55,4 +57,30 @@ public class AuthService {
 
         return new AuthResponse(jwtUtil.generateToken(user));
     }
+    public UserEntity getCurrentUser() {
+
+        Authentication auth =
+                SecurityContextHolder.getContext().getAuthentication();
+
+        // 1. auth null or unauthenticated → 401
+        if (auth == null || !auth.isAuthenticated()) {
+            throw new UnauthorizedException("User not authenticated");
+        }
+
+        Object principal = auth.getPrincipal();
+
+        // 2. Reject anonymous / unexpected principals
+        if (!(principal instanceof UserDetails)) {
+            throw new UnauthorizedException("Invalid authentication principal");
+        }
+
+        // 3. Extract username/email
+        String username = ((UserDetails) principal).getUsername();
+
+        // 4. Fetch actual domain user
+        return userRepository.findByEmail(username)==null?null:userRepository.findByEmail(username);
+
+    }
+
+
 }
