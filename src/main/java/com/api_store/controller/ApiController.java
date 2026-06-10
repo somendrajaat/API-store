@@ -2,13 +2,12 @@ package com.api_store.controller;
 
 import com.api_store.dto.request.CreateApiRequest;
 import com.api_store.dto.response.ApiResponse;
+import com.api_store.dto.response.SubscribeResponse;
+import com.api_store.dto.response.UserSubscriptionResponse;
 import com.api_store.service.ApiService;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -25,4 +24,15 @@ public class ApiController {
     public List<ApiResponse> getApis(){
         return apiService.getApis();
     }
+
+    @PostMapping("/apis/{id}/subscription")
+    public SubscribeResponse subscribe(@PathVariable Long id){
+        return apiService.subscribeApi(id);
+    }
+
+    @GetMapping("apis/me/subscription")
+    public List<UserSubscriptionResponse> getAllSubscription(){
+        return apiService.getAllSubscription();
+    }
+
 }

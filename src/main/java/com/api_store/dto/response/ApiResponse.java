@@ -10,7 +10,8 @@ public class ApiResponse {
     private String baseUrl;
     private Date createdAt;
     public ApiResponse(){}
-    public ApiResponse(String name, String description, String baseUrl, Date createdAt) {
+    public ApiResponse(Long id,String name, String description, String baseUrl, Date createdAt) {
+        this.id=id;
         this.name = name;
         this.description = description;
         this.baseUrl = baseUrl;
