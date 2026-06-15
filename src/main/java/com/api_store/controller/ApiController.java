@@ -34,5 +34,9 @@ public class ApiController {
     public List<UserSubscriptionResponse> getAllSubscription(){
         return apiService.getAllSubscription();
     }
+    @DeleteMapping("/subscriptions/{id}")
+    public void delete(@PathVariable Long id){
+        apiService.delete(id);
+    }
 
 }

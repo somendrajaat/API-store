@@ -8,13 +8,11 @@ import com.api_store.dto.response.ApiResponse;
 import com.api_store.dto.response.SubscribeResponse;
 import com.api_store.dto.response.UserSubscriptionResponse;
 import com.api_store.repository.ApiRepository;
-import com.api_store.repository.subscriptionRepository;
+import com.api_store.repository.SubscriptionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -26,7 +24,7 @@ public class ApiService {
     @Autowired
     private AuthService authService;
     @Autowired
-    private subscriptionRepository subscriptionRepository;
+    private SubscriptionRepository subscriptionRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
 
@@ -35,6 +33,8 @@ public class ApiService {
            name:
            description:
            baseurl:
+
+           and and and it does not checks if the api is already created or not
       * */
     public ApiResponse createApi(CreateApiRequest dto) {
         UserEntity user = authService.getCurrentUser();
@@ -108,8 +108,16 @@ public class ApiService {
     public List<UserSubscriptionResponse> getAllSubscription() {
         UserEntity user = authService.getCurrentUser();
         return subscriptionRepository.findByUser(user).stream()
-                .map(sub-> new UserSubscriptionResponse(sub.getApiId()
-                ,sub.getApiName()
+                .map(sub-> new UserSubscriptionResponse(
+                        sub.getId(),
+                        sub.getApiKeyHash(),
+                        sub.getApi().getId(),
+                        sub.getApi().getName(),
+                        sub.getCreatedAt()
                 )).toList();
+    }
+
+    public void delete(Long id) {
+        subscriptionRepository.deleteById(id);
     }
 }

@@ -1,5 +1,6 @@
 package com.api_store.dto.response;
 
+import jakarta.persistence.GeneratedValue;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -7,6 +8,7 @@ import lombok.Setter;
 @Setter
 public class SubscribeResponse {
 
+    Long Id;
     Long apiId;
     String apiName;
     String apiKey;
