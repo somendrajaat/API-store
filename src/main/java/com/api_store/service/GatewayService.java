@@ -6,6 +6,7 @@ import com.api_store.repository.ApiRepository;
 import com.api_store.repository.SubscriptionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -26,7 +27,9 @@ public class GatewayService {
 
 
     // this function just works. but soon it'll need serious exception handling + optimization
-    public Object proxy(Long apiId, String apiKey, HttpServletRequest request) {
+    public ResponseEntity<String> proxy(Long apiId, String apiKey,
+                                        HttpServletRequest request) {
+
         List<SubscriptionEntity> subs=subscriptionRepository.findAll();
         SubscriptionEntity validSubscription = null;
 
@@ -64,13 +67,20 @@ public class GatewayService {
                 requestUri.substring(prefix.length());
         String targetUrl =
                 api.getBaseUrl() + remainingPath;
-        String response =
-                webClient
-                        .get()
-                        .uri(targetUrl)
-                        .retrieve()
-                        .bodyToMono(String.class)
-                        .block();  // need to optimize later
-        return  response;
+        if(request.getQueryString() != null){
+            targetUrl += "?" + request.getQueryString();
+        }
+        HttpMethod method =
+                HttpMethod.valueOf(
+                        request.getMethod()
+                );
+        // need to optimize later
+        ResponseEntity<String> response= webClient
+                .method(method)
+                .uri(targetUrl)
+                .retrieve()
+                .toEntity(String.class)
+                .block();
+        return response;
     }
 }

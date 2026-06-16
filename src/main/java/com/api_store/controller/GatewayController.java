@@ -18,13 +18,10 @@ public class GatewayController {
 
 
     @RequestMapping("/{apiId}/**")
-    public ResponseEntity<?> proxy(
-            @PathVariable long apiId,
-            HttpServletRequest request){
-        System.out.println("gateway hit");
+    public ResponseEntity<?> proxy(@PathVariable long apiId, HttpServletRequest request){
+
         String apiKey=request.getHeader("X-API-KEY");
-        Object response= gatewayService.proxy(apiId,apiKey,request);
-        return ResponseEntity.ok(response);
+        return  gatewayService.proxy(apiId,apiKey,request);
     }
 
 }
