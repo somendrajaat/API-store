@@ -12,7 +12,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.beans.ExceptionListener;
 import java.io.IOException;
 import java.util.Enumeration;
 import java.util.List;
@@ -30,10 +29,32 @@ public class GatewayService {
     PasswordEncoder passwordEncoder;
 
 
-    // this function just works. but soon it'll need serious exception handling + optimization
-    public ResponseEntity<String> proxy(Long apiId, String apiKey,
-                                        HttpServletRequest request) {
-        //checking in the list of subscription that the user holds.
+    public ResponseEntity<String> proxy(Long apiId,String apiKey,HttpServletRequest request) {
+
+        SubscriptionEntity subscription =
+                validateApiKey(apiKey);
+
+        validateApiOwnership(subscription, apiId);
+
+        ApiEntity api = getApi(apiId);
+
+        String targetUrl =
+                buildTargetUrl(api, request, apiId);
+
+        String body =
+                extractBody(request);
+
+        return forwardRequest(
+                request,
+                targetUrl,
+                body
+        );
+    }
+
+
+
+    private SubscriptionEntity validateApiKey(
+            String apiKey) {
         List<SubscriptionEntity> subs=subscriptionRepository.findAll();
         SubscriptionEntity validSubscription = null;
         // its O(n) not sure if i can optimize that
@@ -52,7 +73,14 @@ public class GatewayService {
         if(validSubscription == null){
             throw new RuntimeException("Invalid API Key");
         }
-        if(!validSubscription.getApi()
+       return validSubscription;
+
+    }
+    private void validateApiOwnership(
+            SubscriptionEntity subscription,
+            Long apiId) {
+
+        if(!subscription.getApi()
                 .getId()
                 .equals(apiId)) {
 
@@ -60,11 +88,17 @@ public class GatewayService {
                     "API key does not belong to this API");
         }
 
-        // total brute force need to add error handling
-        ApiEntity api = apiRepository
+    }
+    private ApiEntity getApi(Long apiId) {
+        return apiRepository
                 .findById(apiId)
                 .orElseThrow(() ->
                         new RuntimeException("API not found"));
+    }
+    private String buildTargetUrl(
+            ApiEntity api,
+            HttpServletRequest request,
+            Long apiId) {
         String requestUri =
                 request.getRequestURI();
 
@@ -75,15 +109,13 @@ public class GatewayService {
                 requestUri.substring(prefix.length());
         String targetUrl =
                 api.getBaseUrl() + remainingPath;
-        // checking if their's is any query in the parameter.
         if(request.getQueryString() != null){
             targetUrl += "?" + request.getQueryString();
         }
-
-        HttpMethod method =
-                HttpMethod.valueOf(
-                        request.getMethod()
-                );
+        return targetUrl;
+    }
+    private String extractBody(
+            HttpServletRequest request) {
         String body;
         try {
             body = request.getReader()
@@ -92,10 +124,17 @@ public class GatewayService {
         } catch (IOException e) {
             throw new RuntimeException("Failed to read request body", e);
         }
-
-        System.out.println(body);
-        // need to optimize later
-        ResponseEntity<String> response= webClient
+        return body;
+    }
+    private ResponseEntity<String> forwardRequest(
+            HttpServletRequest request,
+            String targetUrl,
+            String body) {
+        HttpMethod method =
+                HttpMethod.valueOf(
+                        request.getMethod()
+                );
+        return webClient
                 .method(method)
                 .uri(targetUrl)
                 .headers(headers -> {
@@ -125,6 +164,6 @@ public class GatewayService {
                 //this helps in returning the status code of the API call. our server is the client at this point.
                 .toEntity(String.class)
                 .block();
-        return response;
     }
+
 }
