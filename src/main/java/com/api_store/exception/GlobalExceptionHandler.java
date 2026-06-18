@@ -1,6 +1,7 @@
 package com.api_store.exception;
 
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -18,4 +19,17 @@ public class GlobalExceptionHandler {
                 "message", ex.getMessage()
         );
     }
+    @ExceptionHandler(TooManyRequestsException.class)
+    public ResponseEntity<?> handleRateLimit(
+            TooManyRequestsException ex) {
+
+        return ResponseEntity
+                .status(HttpStatus.TOO_MANY_REQUESTS)
+                .body(Map.of(
+                        "message",
+                        ex.getMessage()
+                ));
+    }
+
+
 }

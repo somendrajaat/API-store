@@ -2,15 +2,20 @@ package com.api_store.service;
 
 import com.api_store.domain.api.ApiEntity;
 import com.api_store.domain.subscription.SubscriptionEntity;
+import com.api_store.exception.TooManyRequestsException;
 import com.api_store.repository.ApiRepository;
 import com.api_store.repository.SubscriptionRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.WebClientException;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.Enumeration;
@@ -20,20 +25,24 @@ import java.util.stream.Collectors;
 @Service
 public class GatewayService {
     @Autowired
-    SubscriptionRepository subscriptionRepository;
+    private SubscriptionRepository subscriptionRepository;
     @Autowired
-    ApiRepository apiRepository;
+    private ApiRepository apiRepository;
     @Autowired
-    WebClient webClient;
+    private WebClient webClient;
     @Autowired
-    PasswordEncoder passwordEncoder;
-
+    private PasswordEncoder passwordEncoder;
+    @Autowired
+    private RateLimitService rateLimitService;
 
     public ResponseEntity<String> proxy(Long apiId,String apiKey,HttpServletRequest request) {
 
         SubscriptionEntity subscription =
                 validateApiKey(apiKey);
 
+        if (!rateLimitService.allowRequest(apiKey)) {
+            throw new TooManyRequestsException();
+        }
         validateApiOwnership(subscription, apiId);
 
         ApiEntity api = getApi(apiId);
@@ -71,7 +80,10 @@ public class GatewayService {
 
         //need to add better exceptoon handling
         if(validSubscription == null){
-            throw new RuntimeException("Invalid API Key");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "Invalid API Key"
+            );
         }
        return validSubscription;
 
@@ -84,8 +96,10 @@ public class GatewayService {
                 .getId()
                 .equals(apiId)) {
 
-            throw new RuntimeException(
-                    "API key does not belong to this API");
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN,
+                    "API key does not belong to this API"
+            );
         }
 
     }
@@ -93,7 +107,10 @@ public class GatewayService {
         return apiRepository
                 .findById(apiId)
                 .orElseThrow(() ->
-                        new RuntimeException("API not found"));
+                        new ResponseStatusException(
+                                HttpStatus.NOT_FOUND,
+                                "API not found"
+                        ));
     }
     private String buildTargetUrl(
             ApiEntity api,
@@ -134,36 +151,41 @@ public class GatewayService {
                 HttpMethod.valueOf(
                         request.getMethod()
                 );
-        return webClient
-                .method(method)
-                .uri(targetUrl)
-                .headers(headers -> {
+        try {
+            return webClient
+                    .method(method)
+                    .uri(targetUrl)
+                    .headers(headers -> {
 
-                    Enumeration<String> headerNames =
-                            request.getHeaderNames();
+                        Enumeration<String> headerNames =
+                                request.getHeaderNames();
 
-                    while(headerNames.hasMoreElements()) {
+                        while (headerNames.hasMoreElements()) {
 
-                        String header =
-                                headerNames.nextElement();
+                            String header =
+                                    headerNames.nextElement();
 
-                        if(
-                                !header.equalsIgnoreCase("X-API-KEY")
-                                        && !header.equalsIgnoreCase("Host")
-                                        && !header.equalsIgnoreCase("Connection")
-                        ) {
-                            headers.add(
-                                    header,
-                                    request.getHeader(header)
-                            );
+                            if (
+                                    !header.equalsIgnoreCase("X-API-KEY")
+                                            && !header.equalsIgnoreCase("Host")
+                                            && !header.equalsIgnoreCase("Connection")
+                            ) {
+                                headers.add(
+                                        header,
+                                        request.getHeader(header)
+                                );
+                            }
                         }
-                    }
-                })
-                .bodyValue(body)
-                .retrieve()
-                //this helps in returning the status code of the API call. our server is the client at this point.
-                .toEntity(String.class)
-                .block();
+                    })
+                    .bodyValue(body)
+                    .retrieve()
+                    //this helps in returning the status code of the API call. our server is the client at this point.
+                    .toEntity(String.class)
+                    .block();
+           }catch (WebClientResponseException e){
+                return ResponseEntity.status(e.getStatusCode()).
+                            body(e.getResponseBodyAsString());
+        }
     }
 
 }
