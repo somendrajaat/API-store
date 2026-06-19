@@ -39,6 +39,7 @@ public class GatewayService {
     @Autowired
     private UsageRepository usageRepository;
 
+
     public ResponseEntity<String> proxy(Long apiId,String apiKey,HttpServletRequest request) {
 
 

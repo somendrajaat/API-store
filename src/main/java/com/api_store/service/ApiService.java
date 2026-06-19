@@ -2,14 +2,18 @@ package com.api_store.service;
 
 import com.api_store.domain.api.ApiEntity;
 import com.api_store.domain.subscription.SubscriptionEntity;
+import com.api_store.domain.usage.UsageEntity;
 import com.api_store.domain.user.UserEntity;
 import com.api_store.dto.request.CreateApiRequest;
 import com.api_store.dto.response.ApiResponse;
 import com.api_store.dto.response.SubscribeResponse;
+import com.api_store.dto.response.UsageStat;
 import com.api_store.dto.response.UserSubscriptionResponse;
 import com.api_store.repository.ApiRepository;
 import com.api_store.repository.SubscriptionRepository;
+import com.api_store.repository.UsageRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -27,6 +31,8 @@ public class ApiService {
     private SubscriptionRepository subscriptionRepository;
     @Autowired
     private PasswordEncoder passwordEncoder;
+    @Autowired
+    private UsageRepository usageRepository;
 
     /*    This is to create API
            it takes json as
@@ -119,5 +125,30 @@ public class ApiService {
 
     public void delete(Long id) {
         subscriptionRepository.deleteById(id);
+    }
+
+
+    public ResponseEntity<?> usageStat(Long apiId) {
+        UserEntity user = authService.getCurrentUser();
+        Optional<ApiEntity> api = apiRepository.findById(apiId);
+        if(api.isEmpty()){
+            return ResponseEntity.badRequest().body("API does not exists");
+        }
+//        if (!api.get().getOwner().getEmail().equals(user.getEmail())) {
+//            return ResponseEntity.badRequest().body("Bad UserId");
+//        }
+
+        Long total=usageRepository.countByApi(api.get());
+        Double averageLatency =
+                usageRepository.averageLatency(apiId);
+
+        Long success = usageRepository.countByApiAndStatusCodeBetween(api.get(),200,299);
+
+        Double successRate = total == 0 ? 0.0 : (success * 100.0) / total;
+
+        UsageStat dto = new UsageStat(total,averageLatency,successRate);
+
+        return ResponseEntity.ok(dto);
+
     }
 }

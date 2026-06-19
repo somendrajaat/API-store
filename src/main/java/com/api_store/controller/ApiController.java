@@ -5,8 +5,10 @@ import com.api_store.dto.response.ApiResponse;
 import com.api_store.dto.response.SubscribeResponse;
 import com.api_store.dto.response.UserSubscriptionResponse;
 import com.api_store.service.ApiService;
+import com.api_store.service.GatewayService;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -38,5 +40,8 @@ public class ApiController {
     public void delete(@PathVariable Long id){
         apiService.delete(id);
     }
-
+    @GetMapping("apis/{apiId}/usage")
+    public ResponseEntity<?> usageState(@PathVariable Long apiId){
+        return apiService.usageStat(apiId);
+    }
 }
