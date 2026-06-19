@@ -1,19 +1,21 @@
 package com.api_store.service;
 
+import com.api_store.domain.usage.UsageEntity;
 import com.api_store.domain.api.ApiEntity;
 import com.api_store.domain.subscription.SubscriptionEntity;
 import com.api_store.exception.TooManyRequestsException;
 import com.api_store.repository.ApiRepository;
 import com.api_store.repository.SubscriptionRepository;
+import com.api_store.repository.UsageRepository;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
-import org.springframework.web.reactive.function.client.WebClientException;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -34,8 +36,11 @@ public class GatewayService {
     private PasswordEncoder passwordEncoder;
     @Autowired
     private RateLimitService rateLimitService;
+    @Autowired
+    private UsageRepository usageRepository;
 
     public ResponseEntity<String> proxy(Long apiId,String apiKey,HttpServletRequest request) {
+
 
         SubscriptionEntity subscription =
                 validateApiKey(apiKey);
@@ -46,21 +51,84 @@ public class GatewayService {
         validateApiOwnership(subscription, apiId);
 
         ApiEntity api = getApi(apiId);
-
+        long start = System.currentTimeMillis();
         String targetUrl =
                 buildTargetUrl(api, request, apiId);
 
         String body =
                 extractBody(request);
 
-        return forwardRequest(
-                request,
-                targetUrl,
-                body
-        );
+        HttpMethod method =
+                HttpMethod.valueOf(request.getMethod());
+
+        try {
+
+            ResponseEntity<String> response =
+                    webClient
+                            .method(method)
+                            .uri(targetUrl)
+                            .headers(headers ->
+                                    copyHeaders(request, headers))
+                            .bodyValue(body)
+                            .retrieve()
+                            .toEntity(String.class)
+                            .block();
+
+            saveUsage(
+                    api,
+                    subscription,
+                    request.getMethod(),
+                    response.getStatusCode().value(),
+                    System.currentTimeMillis() - start
+            );
+
+            return response;
+
+        } catch (WebClientResponseException e) {
+
+            saveUsage(
+                    api,
+                    subscription,
+                    request.getMethod(),
+                    e.getStatusCode().value(),
+                    System.currentTimeMillis() - start
+            );
+
+            return ResponseEntity
+                    .status(e.getStatusCode())
+                    .body(e.getResponseBodyAsString());
+        }
+    }
+
+    private void saveUsage(ApiEntity api, SubscriptionEntity subscription, String method, int value, long latency) {
+        UsageEntity usage=new UsageEntity(api,subscription,method,value,latency);
+        usageRepository.save(usage);
     }
 
 
+    private void copyHeaders(
+            HttpServletRequest request,
+            HttpHeaders headers) {
+
+        Enumeration<String> headerNames =
+                request.getHeaderNames();
+
+        while (headerNames.hasMoreElements()) {
+
+            String header =
+                    headerNames.nextElement();
+
+            if (!header.equalsIgnoreCase("X-API-KEY")
+                    && !header.equalsIgnoreCase("Host")
+                    && !header.equalsIgnoreCase("Connection")) {
+
+                headers.add(
+                        header,
+                        request.getHeader(header)
+                );
+            }
+        }
+    }
 
     private SubscriptionEntity validateApiKey(
             String apiKey) {
@@ -143,49 +211,7 @@ public class GatewayService {
         }
         return body;
     }
-    private ResponseEntity<String> forwardRequest(
-            HttpServletRequest request,
-            String targetUrl,
-            String body) {
-        HttpMethod method =
-                HttpMethod.valueOf(
-                        request.getMethod()
-                );
-        try {
-            return webClient
-                    .method(method)
-                    .uri(targetUrl)
-                    .headers(headers -> {
 
-                        Enumeration<String> headerNames =
-                                request.getHeaderNames();
 
-                        while (headerNames.hasMoreElements()) {
-
-                            String header =
-                                    headerNames.nextElement();
-
-                            if (
-                                    !header.equalsIgnoreCase("X-API-KEY")
-                                            && !header.equalsIgnoreCase("Host")
-                                            && !header.equalsIgnoreCase("Connection")
-                            ) {
-                                headers.add(
-                                        header,
-                                        request.getHeader(header)
-                                );
-                            }
-                        }
-                    })
-                    .bodyValue(body)
-                    .retrieve()
-                    //this helps in returning the status code of the API call. our server is the client at this point.
-                    .toEntity(String.class)
-                    .block();
-           }catch (WebClientResponseException e){
-                return ResponseEntity.status(e.getStatusCode()).
-                            body(e.getResponseBodyAsString());
-        }
-    }
 
 }
