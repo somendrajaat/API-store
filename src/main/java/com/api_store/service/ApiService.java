@@ -44,6 +44,7 @@ public class ApiService {
       * */
     public ApiResponse createApi(CreateApiRequest dto) {
         UserEntity user = authService.getCurrentUser();
+        
         ApiEntity api= new ApiEntity();
         api.setName(dto.getName());
         api.setDescription(dto.getDescription());

@@ -1,0 +1,8 @@
+package com.api_store.exception;
+
+public class ForbiddenException extends RuntimeException{
+    public ForbiddenException()
+    {
+        super("Forbidden");
+    }
+}
