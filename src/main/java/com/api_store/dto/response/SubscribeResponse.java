@@ -13,11 +13,12 @@ public class SubscribeResponse {
     String apiName;
     String apiKey;
     String message;
-    public SubscribeResponse(Long apiId, String apiKey, String apiName, String message){
+    public SubscribeResponse(Long apiId, String apiKey, String apiName, String message,Long id){
         this.apiId=apiId;
         this.apiKey=apiKey;
         this.apiName=apiName;
         this.message=message;
+        this.Id=id;
     }
     public SubscribeResponse(String message){
         this.message=message;
