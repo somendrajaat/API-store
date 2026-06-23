@@ -2,8 +2,8 @@ package com.api_store.exception;
 
 public class TooManyRequestsException extends RuntimeException {
 
-    public TooManyRequestsException() {
+    public TooManyRequestsException(String message) {
 
-        super("Rate limit exceed");
+        super(message);
     }
 }

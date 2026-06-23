@@ -47,7 +47,7 @@ public class GatewayService {
                 validateApiKey(apiKey);
 
         if (!rateLimitService.allowRequest(apiKey)) {
-            throw new TooManyRequestsException();
+            throw new TooManyRequestsException("Too Many Request");
         }
         validateApiOwnership(subscription, apiId);
 

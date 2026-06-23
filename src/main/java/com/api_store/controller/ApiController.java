@@ -19,26 +19,26 @@ public class ApiController {
     ApiService apiService;
 
     @PostMapping("/apis")
-    public ApiResponse createApi(@RequestBody CreateApiRequest dto) {
+    public ResponseEntity<?> createApi(@RequestBody CreateApiRequest dto) {
         return apiService.createApi(dto);
     }
     @GetMapping("/apis")
-    public List<ApiResponse> getApis(){
+    public ResponseEntity<?> getApis(){
         return apiService.getApis();
     }
 
     @PostMapping("/apis/{id}/subscription")
-    public SubscribeResponse subscribe(@PathVariable Long id){
+    public ResponseEntity<?> subscribe(@PathVariable Long id){
         return apiService.subscribeApi(id);
     }
 
     @GetMapping("apis/me/subscription")
-    public List<UserSubscriptionResponse> getAllSubscription(){
+    public ResponseEntity<?> getAllSubscription(){
         return apiService.getAllSubscription();
     }
     @DeleteMapping("/subscriptions/{id}")
-    public void delete(@PathVariable Long id){
-        apiService.delete(id);
+    public ResponseEntity<?> delete(@PathVariable Long id){
+        return apiService.delete(id);
     }
     @GetMapping("apis/{apiId}/usage")
     public ResponseEntity<?> usageState(@PathVariable Long apiId){

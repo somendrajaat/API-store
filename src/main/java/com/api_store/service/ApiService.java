@@ -9,6 +9,8 @@ import com.api_store.dto.response.ApiResponse;
 import com.api_store.dto.response.SubscribeResponse;
 import com.api_store.dto.response.UsageStat;
 import com.api_store.dto.response.UserSubscriptionResponse;
+import com.api_store.exception.BadRequestException;
+import com.api_store.exception.ResourceNotFoundException;
 import com.api_store.repository.ApiRepository;
 import com.api_store.repository.SubscriptionRepository;
 import com.api_store.repository.UsageRepository;
@@ -42,9 +44,8 @@ public class ApiService {
 
            and and and it does not checks if the api is already created or not
       * */
-    public ApiResponse createApi(CreateApiRequest dto) {
+    public ResponseEntity<?> createApi(CreateApiRequest dto) {
         UserEntity user = authService.getCurrentUser();
-        
         ApiEntity api= new ApiEntity();
         api.setName(dto.getName());
         api.setDescription(dto.getDescription());
@@ -53,40 +54,39 @@ public class ApiService {
 
         apiRepository.save(api);
 
-        return new ApiResponse(
+        return ResponseEntity.ok(new ApiResponse(
                 api.getId(),
                 api.getName(),
                 api.getDescription(),
                 api.getBaseUrl(),
-                null);
+                null));
     }
 
     /*
     It takes greps the list of all the APIs a user holds
 
      */
-    public List<ApiResponse> getApis() {
+    public ResponseEntity<?> getApis() {
         UserEntity user = authService.getCurrentUser();
         List<ApiEntity> apiEntities = apiRepository.findByOwner(user);
-        return apiEntities.stream().map(api -> new ApiResponse(
+        return ResponseEntity.ok(apiEntities.stream().map(api -> new ApiResponse(
                 api.getId(),
                 api.getName(),
                 api.getDescription(),
                 api.getBaseUrl(),
                 null
-        )).toList();
+        )).toList());
     }
 
-    public SubscribeResponse subscribeApi(Long id) {
+    public ResponseEntity<?> subscribeApi(Long id) {
         UserEntity user=authService.getCurrentUser();
-        Optional<ApiEntity> api=apiRepository.findById(id);
-        if(api.isEmpty()){
-           return new SubscribeResponse("API does not exists");
-        }
+        ApiEntity api=apiRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Api does not exist"));
+
         boolean alreadySubscribed =
-                subscriptionRepository.existsByUserAndApi(user, api.get());
+                subscriptionRepository.existsByUserAndApi(user, api);
+
         if(alreadySubscribed){
-            return new SubscribeResponse("API already subscribed");
+            throw new BadRequestException("Api Already Subscribed");
         }
 
         String apiKey=generateApiKey();
@@ -94,17 +94,17 @@ public class ApiService {
 
         SubscriptionEntity subscriptionEntity=new SubscriptionEntity(
                 user,
-                api.get(),
+                api,
                 apiKeyHash
         );
 
         subscriptionRepository.save(subscriptionEntity);
-        return new SubscribeResponse(
-                api.get().getId(),
+        return ResponseEntity.ok(new SubscribeResponse(
+                api.getId(),
                 apiKey,
-                api.get().getName(),
+                api.getName(),
                 "Success"
-        );
+        ));
     }
 
     private String generateApiKey() {
@@ -112,20 +112,27 @@ public class ApiService {
     }
 
 
-    public List<UserSubscriptionResponse> getAllSubscription() {
+    public ResponseEntity<?> getAllSubscription() {
         UserEntity user = authService.getCurrentUser();
-        return subscriptionRepository.findByUser(user).stream()
+        return ResponseEntity.ok(subscriptionRepository.findByUser(user).stream()
                 .map(sub-> new UserSubscriptionResponse(
                         sub.getId(),
                         sub.getApiKeyHash(),
                         sub.getApi().getId(),
                         sub.getApi().getName(),
                         sub.getCreatedAt()
-                )).toList();
+                )).toList());
     }
 
-    public void delete(Long id) {
+    public ResponseEntity<?> delete(Long id) {
+        UserEntity user = authService.getCurrentUser();
+        subscriptionRepository.findByIdAndUser(id,user)
+                .orElseThrow(
+                        ()->new ResourceNotFoundException(
+                        "Subscription does not exits"
+                ));
         subscriptionRepository.deleteById(id);
+        return ResponseEntity.ok("Subscription with ID: "+id+" deleted successfully" );
     }
 
 
