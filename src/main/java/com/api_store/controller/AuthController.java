@@ -4,7 +4,9 @@ import com.api_store.dto.request.LoginRequest;
 import com.api_store.dto.request.RegisterRequest;
 import com.api_store.dto.response.AuthResponse;
 import com.api_store.service.AuthService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -16,14 +18,14 @@ public class AuthController {
 
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody RegisterRequest dto) {
+    public ResponseEntity<?> register(@Valid @RequestBody RegisterRequest dto) {
         // Registration logic goes here
         authService.register(dto);
         return ResponseEntity.ok("User registered successfully");
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody LoginRequest dto) {
+    public ResponseEntity<?> login(@Valid @RequestBody LoginRequest dto) {
         // Login logic goes here
         AuthResponse authResponse = authService.login(dto);
         if (authResponse == null) {

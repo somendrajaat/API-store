@@ -87,7 +87,11 @@ public class ApiService {
 
         boolean alreadySubscribed =
                 subscriptionRepository.existsByUserAndApi(user, api);
-
+        if(api.getOwner().getEmail().equals(user.getEmail())) {
+            throw new BadRequestException(
+                    "You cannot subscribe to your own API"
+            );
+        }
         if(alreadySubscribed){
             throw new BadRequestException("Api Already Subscribed");
         }

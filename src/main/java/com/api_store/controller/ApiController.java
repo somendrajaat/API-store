@@ -6,6 +6,7 @@ import com.api_store.dto.response.SubscribeResponse;
 import com.api_store.dto.response.UserSubscriptionResponse;
 import com.api_store.service.ApiService;
 import com.api_store.service.GatewayService;
+import jakarta.validation.Valid;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class ApiController {
     ApiService apiService;
 
     @PostMapping("/apis")
-    public ResponseEntity<?> createApi(@RequestBody CreateApiRequest dto) {
+    public ResponseEntity<?> createApi(@Valid @RequestBody CreateApiRequest dto) {
         return apiService.createApi(dto);
     }
     @GetMapping("/apis")

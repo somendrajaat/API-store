@@ -1,9 +1,16 @@
 package com.api_store.dto.request;
 
-public class CreateApiRequest {
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 
+public class CreateApiRequest {
+    @NotBlank
+    @Size(max = 100)
     private String name;
+    @NotBlank
+    @Size(max = 500)
     private String description;
+    @NotBlank
     private String baseUrl;
     public String getName() {
         return name;

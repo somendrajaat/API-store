@@ -1,7 +1,15 @@
 package com.api_store.dto.request;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+
 public class LoginRequest {
+    @Email
+    @NotBlank
     private String email;
+
+    @Size(min = 8, max = 100)
     private String password;
 
     public String getEmail() {
