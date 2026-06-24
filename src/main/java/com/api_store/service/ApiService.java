@@ -44,9 +44,12 @@ public class ApiService {
 
            and and and it does not checks if the api is already created or not
       * */
+
+
     public ResponseEntity<?> createApi(CreateApiRequest dto) {
         UserEntity user = authService.getCurrentUser();
         ApiEntity api= new ApiEntity();
+        // need to add validation feature.
         api.setName(dto.getName());
         api.setDescription(dto.getDescription());
         api.setBaseUrl(dto.getBaseUrl());

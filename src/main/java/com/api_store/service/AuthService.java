@@ -37,7 +37,8 @@ public class AuthService {
     }
 
     public void register(RegisterRequest dto) {
-
+        //need to add validation with
+        // should not allow same user to register twice
         String hash=passwordEncoder.encode(dto.getPassword());
         UserEntity user=new UserEntity(dto.getEmail(),hash,USER);
         userRepository.save(user);

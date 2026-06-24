@@ -1,5 +1,6 @@
 package com.api_store.service;
 
+import com.api_store.exception.ForbiddenException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
@@ -24,11 +25,10 @@ public class RateLimitService {
        String key="rate_limit:"+ apikey;
         Long count = redisTemplate.opsForValue().increment(key);
         if (count == null) {
-            throw new IllegalStateException("Failed to increment rate limit counter");
+            throw new ForbiddenException("Failed to increment rate limit counter");
         }
         if (count == 1) {
             redisTemplate.expire(key, Duration.ofSeconds(WINDOW_SECONDS));
-
         }
         return count<=LIMIT;
     }

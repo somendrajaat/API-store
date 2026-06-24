@@ -3,6 +3,8 @@ package com.api_store.service;
 import com.api_store.domain.usage.UsageEntity;
 import com.api_store.domain.api.ApiEntity;
 import com.api_store.domain.subscription.SubscriptionEntity;
+import com.api_store.exception.ForbiddenException;
+import com.api_store.exception.ResourceNotFoundException;
 import com.api_store.exception.TooManyRequestsException;
 import com.api_store.repository.ApiRepository;
 import com.api_store.repository.SubscriptionRepository;
@@ -11,13 +13,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.util.Enumeration;
@@ -149,10 +149,7 @@ public class GatewayService {
 
         //need to add better exceptoon handling
         if(validSubscription == null){
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "Invalid API Key"
-            );
+            throw new ResourceNotFoundException("Subscription does not exists");
         }
        return validSubscription;
 
@@ -165,10 +162,7 @@ public class GatewayService {
                 .getId()
                 .equals(apiId)) {
 
-            throw new ResponseStatusException(
-                    HttpStatus.FORBIDDEN,
-                    "API key does not belong to this API"
-            );
+            throw new ResourceNotFoundException("Api key does not belong to the current owner");
         }
 
     }
@@ -176,10 +170,7 @@ public class GatewayService {
         return apiRepository
                 .findById(apiId)
                 .orElseThrow(() ->
-                        new ResponseStatusException(
-                                HttpStatus.NOT_FOUND,
-                                "API not found"
-                        ));
+                        new ResourceNotFoundException("Api with Id: "+apiId+" does not exists"));
     }
     private String buildTargetUrl(
             ApiEntity api,
@@ -208,7 +199,7 @@ public class GatewayService {
                     .lines()
                     .collect(Collectors.joining("\n"));
         } catch (IOException e) {
-            throw new RuntimeException("Failed to read request body", e);
+            throw new ForbiddenException("Failed to read request body "+ e);
         }
         return body;
     }
