@@ -1,8 +1,10 @@
 package com.api_store.exception;
 
+import org.springframework.boot.autoconfigure.graphql.GraphQlProperties;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -93,6 +95,13 @@ public class GlobalExceptionHandler {
                         "message", "Invalid email or password"
                 ));
     }
-
+    @ExceptionHandler( HttpRequestMethodNotSupportedException.class)
+    public ResponseEntity<?> BadMethodException(HttpRequestMethodNotSupportedException ex){
+        return ResponseEntity.status(HttpStatus.METHOD_NOT_ALLOWED)
+                .body(Map.of(
+                        "error","Invalid HTTP Method",
+                        "message","invalid Method"
+                ));
+    }
 
 }

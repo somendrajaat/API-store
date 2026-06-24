@@ -5,6 +5,7 @@ import com.api_store.domain.user.UserEntity;
 import com.api_store.dto.request.LoginRequest;
 import com.api_store.dto.request.RegisterRequest;
 import com.api_store.dto.response.AuthResponse;
+import com.api_store.exception.BadRequestException;
 import com.api_store.exception.UnauthorizedException;
 import com.api_store.repository.UserRepository;
 import com.api_store.util.JwtUtil;
@@ -29,6 +30,7 @@ public class AuthService {
     private final AuthenticationManager authManager;
     @Autowired
     UserRepository userRepository;
+
     private final PasswordEncoder passwordEncoder;
 
     public AuthService(AuthenticationManager authManager, PasswordEncoder passwordEncoder) {
@@ -37,8 +39,12 @@ public class AuthService {
     }
 
     public void register(RegisterRequest dto) {
+        if (userRepository.existsByEmail(dto.getEmail())){
+            throw new BadRequestException("User already exists with this email");
+        }
         //need to add validation with
         // should not allow same user to register twice
+
         String hash=passwordEncoder.encode(dto.getPassword());
         UserEntity user=new UserEntity(dto.getEmail(),hash,USER);
         userRepository.save(user);
