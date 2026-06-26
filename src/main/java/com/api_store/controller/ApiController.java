@@ -27,10 +27,14 @@ public class ApiController {
     public ResponseEntity<?> getApis(){
         return apiService.getApis();
     }
+    @GetMapping("/apis/all")
+    public ResponseEntity<?> getAllApis(){
+        return apiService.getAllApis();
+    }
 
-    @PostMapping("/apis/{id}/subscription")
-    public ResponseEntity<?> subscribe(@PathVariable Long id){
-        return apiService.subscribeApi(id);
+    @PostMapping("/apis/{apiId}/subscription")
+    public ResponseEntity<?> subscribe(@PathVariable Long apiId){
+        return apiService.subscribeApi(apiId);
     }
 
     @GetMapping("apis/me/subscription")

@@ -12,7 +12,7 @@ public class RateLimitService {
 
     private final StringRedisTemplate redisTemplate;
 
-    private static final int LIMIT = 100;
+    private static final int LIMIT = 4000;
     private static final int WINDOW_SECONDS = 60;
 
 

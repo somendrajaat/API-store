@@ -42,7 +42,9 @@ public class GatewayService {
 
     public ResponseEntity<String> proxy(Long apiId,String apiKey,HttpServletRequest request) {
 
-
+        // need to fix this.
+        //checking the apikey first and then subs later.
+        // should be opposite.
         SubscriptionEntity subscription =
                 validateApiKey(apiKey);
 

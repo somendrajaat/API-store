@@ -64,6 +64,8 @@ public class ApiService {
                 null));
     }
 
+
+
     /*
     It takes greps the list of all the APIs a user holds
 
@@ -165,5 +167,16 @@ public class ApiService {
 
         return ResponseEntity.ok(dto);
 
+    }
+
+    public ResponseEntity<?> getAllApis() {
+        List<ApiEntity> apiEntities = apiRepository.findAll();
+        return ResponseEntity.ok(apiEntities.stream().map(api -> new ApiResponse(
+                api.getId(),
+                api.getName(),
+                api.getDescription(),
+                api.getBaseUrl(),
+                null
+        )).toList());
     }
 }
