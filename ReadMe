@@ -10,3 +10,33 @@ Backend system to publish, subscribe, and consume APIs with API keys and rate li
 
 ## Status
 🚧 Initial setup
+
+
+## Performance Testing
+
+The API Gateway was load tested using **Apache JMeter** to evaluate stability and throughput under concurrent traffic.
+
+### Test Environment
+- Apache JMeter
+- Spring Boot 3
+- PostgreSQL
+- Redis
+- Docker
+- JVM: G1GC (`-Xms512m -Xmx512m`)
+
+### Workload
+- 100 concurrent users
+- 2,000 total requests
+- Gateway endpoint proxying JSONPlaceholder
+
+### Results
+- ✅ Successfully processed 2,000 requests
+- ✅ 0% application errors
+- ✅ Stable CPU and memory usage during testing
+- ✅ JVM remained healthy with only Young Generation GC events
+- ✅ No Full GC or OutOfMemoryError observed
+
+### Observations
+- End-to-end latency was primarily affected by the external API being proxied.
+- JVM garbage collection accounted for only a small fraction of total execution time.
+- HikariCP tuning had minimal impact because database access was not the primary bottleneck.
