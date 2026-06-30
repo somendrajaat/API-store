@@ -121,6 +121,16 @@ The gateway validates the consumer's API key, enforces rate limits, forwards the
 10. Provider response is returned to the consumer.
 
 ---
+## Database Schema
+
+The platform is built around four core entities:
+
+- **Users** publish APIs and subscribe to APIs.
+- **APIs** are owned by a single user.
+- **Subscriptions** link users to APIs and securely store hashed API keys.
+- **API Usage** records gateway requests for analytics and monitoring.
+
+![ERD](docs/images/ERD_api_store.png)
 
 ## Engineering Decisions
 
